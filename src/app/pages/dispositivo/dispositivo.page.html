@@ -1,13 +1,86 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>dispositivo</ion-title>
+  <ion-toolbar color="primary">
+    <ion-title>Dispositivo</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">dispositivo</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content [fullscreen]="true" class="ion-padding">
+  <ion-card>
+    <ion-card-header>
+      <div class="section-header">
+        <ion-icon name="speedometer-outline" color="primary"></ion-icon>
+        <div>
+          <ion-card-title>Acelerómetro</ion-card-title>
+          <ion-card-subtitle>
+            Estado: {{ sensorActivo ? 'Activo' : 'Detenido' }}
+          </ion-card-subtitle>
+        </div>
+      </div>
+    </ion-card-header>
+
+    <ion-card-content>
+      <div class="axes-box">
+        <p><strong>X:</strong> {{ lectura.x | number: '1.2-2' }}</p>
+        <p><strong>Y:</strong> {{ lectura.y | number: '1.2-2' }}</p>
+        <p><strong>Z:</strong> {{ lectura.z | number: '1.2-2' }}</p>
+      </div>
+
+      <ion-text color="warning" *ngIf="mensajeSensor" class="sensor-warning">
+        <p>{{ mensajeSensor }}</p>
+      </ion-text>
+
+      <div class="button-row">
+        <ion-button
+          expand="block"
+          (click)="iniciarLectura()"
+          [disabled]="sensorActivo"
+        >
+          <ion-icon slot="start" name="play-outline"></ion-icon>
+          Iniciar lectura
+        </ion-button>
+
+        <ion-button
+          expand="block"
+          color="medium"
+          (click)="detenerLectura()"
+          [disabled]="!sensorActivo"
+        >
+          <ion-icon slot="start" name="stop-outline"></ion-icon>
+          Detener lectura
+        </ion-button>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card>
+    <ion-card-header>
+      <div class="section-header">
+        <ion-icon name="person-outline" color="primary"></ion-icon>
+        <div>
+          <ion-card-title>Almacenamiento local</ion-card-title>
+          <ion-card-subtitle>Persistencia con &#64;capacitor/preferences</ion-card-subtitle>
+        </div>
+      </div>
+    </ion-card-header>
+
+    <ion-card-content>
+      <ion-item>
+        <ion-input
+          label="Nombre del estudiante"
+          labelPlacement="stacked"
+          placeholder="Escribe tu nombre"
+          [(ngModel)]="nombreEstudiante"
+        ></ion-input>
+      </ion-item>
+
+      <ion-button expand="block" class="ion-margin-top" (click)="guardarNombre()">
+        <ion-icon slot="start" name="save-outline"></ion-icon>
+        Guardar nombre
+      </ion-button>
+
+      <p class="saved-name" *ngIf="nombreGuardado">
+        Nombre guardado: <strong>{{ nombreGuardado }}</strong>
+      </p>
+    </ion-card-content>
+  </ion-card>
 </ion-content>

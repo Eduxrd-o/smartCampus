@@ -1,13 +1,182 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>actividades</ion-title>
+  <ion-toolbar color="primary">
+    <ion-title>Actividades</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">actividades</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content [fullscreen]="true" class="ion-padding">
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Nueva actividad académica</ion-card-title>
+      <ion-card-subtitle>Registro en Cloud Firestore</ion-card-subtitle>
+    </ion-card-header>
+
+    <ion-card-content>
+      <form [formGroup]="form" (ngSubmit)="guardarActividad()">
+        <ion-list lines="full">
+          <ion-item>
+            <ion-input
+              label="Título"
+              labelPlacement="stacked"
+              placeholder="Ej. Proyecto Ionic"
+              formControlName="titulo"
+            ></ion-input>
+          </ion-item>
+          <ion-text
+            color="danger"
+            class="error-msg"
+            *ngIf="form.controls.titulo.touched && form.controls.titulo.invalid"
+          >
+            El título es obligatorio.
+          </ion-text>
+
+          <ion-item>
+            <ion-textarea
+              label="Descripción"
+              labelPlacement="stacked"
+              placeholder="Describe la actividad (mínimo 10 caracteres)"
+              [autoGrow]="true"
+              formControlName="descripcion"
+            ></ion-textarea>
+          </ion-item>
+          <ion-text
+            color="danger"
+            class="error-msg"
+            *ngIf="form.controls.descripcion.touched && form.controls.descripcion.invalid"
+          >
+            La descripción es obligatoria y debe tener al menos 10 caracteres.
+          </ion-text>
+
+          <ion-item>
+            <ion-select
+              label="Tipo"
+              labelPlacement="stacked"
+              placeholder="Selecciona un tipo"
+              formControlName="tipo"
+            >
+              <ion-select-option *ngFor="let t of tipos" [value]="t">
+                {{ t }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-text
+            color="danger"
+            class="error-msg"
+            *ngIf="form.controls.tipo.touched && form.controls.tipo.invalid"
+          >
+            Selecciona un tipo de actividad.
+          </ion-text>
+
+          <ion-item>
+            <ion-label>Fecha de entrega</ion-label>
+            <ion-datetime-button datetime="fechaEntregaPicker"></ion-datetime-button>
+          </ion-item>
+          <ion-modal [keepContentsMounted]="true">
+            <ng-template>
+              <ion-datetime
+                id="fechaEntregaPicker"
+                presentation="date"
+                [value]="form.controls.fechaEntrega.value"
+                (ionChange)="onFechaChange($event)"
+              ></ion-datetime>
+            </ng-template>
+          </ion-modal>
+
+          <ion-item lines="none">
+            <ion-label>Prioridad</ion-label>
+          </ion-item>
+          <ion-radio-group formControlName="prioridad" class="priority-group">
+            <ion-item *ngFor="let p of prioridades" lines="none">
+              <ion-radio [value]="p" labelPlacement="end">{{ p }}</ion-radio>
+            </ion-item>
+          </ion-radio-group>
+
+          <ion-item>
+            <ion-checkbox formControlName="completada" labelPlacement="end">
+              Completada
+            </ion-checkbox>
+          </ion-item>
+        </ion-list>
+
+        <ion-button
+          expand="block"
+          type="submit"
+          class="ion-margin-top"
+          [disabled]="guardando"
+        >
+          <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+          {{ guardando ? 'Guardando...' : 'Guardar actividad' }}
+        </ion-button>
+      </form>
+    </ion-card-content>
+  </ion-card>
+
+  <div class="list-header">
+    <h2>Actividades registradas</h2>
+    <ion-button fill="clear" size="small" (click)="cargarActividades()" [disabled]="cargando">
+      Actualizar
+    </ion-button>
+  </div>
+
+  <div class="center-state" *ngIf="cargando">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando actividades...</p>
+  </div>
+
+  <ion-card color="light" *ngIf="!cargando && errorCarga">
+    <ion-card-content>
+      <ion-text color="danger">{{ errorCarga }}</ion-text>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card *ngIf="!cargando && !errorCarga && actividades.length === 0">
+    <ion-card-content>
+      No hay actividades registradas todavía. Crea la primera desde el formulario superior.
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card *ngFor="let act of actividades">
+    <ion-card-header>
+      <div class="card-top">
+        <ion-card-title [class.completed-title]="act.completada">
+          {{ act.titulo }}
+        </ion-card-title>
+        <ion-badge [color]="colorPrioridad(act.prioridad)">
+          {{ act.prioridad }}
+        </ion-badge>
+      </div>
+      <ion-card-subtitle>
+        {{ act.tipo }} · Entrega: {{ act.fechaEntrega }}
+      </ion-card-subtitle>
+    </ion-card-header>
+
+    <ion-card-content>
+      <p>{{ act.descripcion }}</p>
+
+      <div class="card-actions">
+        <ion-button
+          fill="outline"
+          size="small"
+          [color]="act.completada ? 'medium' : 'success'"
+          (click)="alternarCompletada(act)"
+        >
+          <ion-icon
+            slot="start"
+            [name]="act.completada ? 'ellipse-outline' : 'checkmark-circle-outline'"
+          ></ion-icon>
+          {{ act.completada ? 'Marcar pendiente' : 'Completar' }}
+        </ion-button>
+
+        <ion-button
+          fill="outline"
+          size="small"
+          color="danger"
+          (click)="confirmarEliminacion(act)"
+        >
+          <ion-icon slot="start" name="trash-outline"></ion-icon>
+          Eliminar
+        </ion-button>
+      </div>
+    </ion-card-content>
+  </ion-card>
 </ion-content>
